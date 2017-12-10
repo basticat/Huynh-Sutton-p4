@@ -21,7 +21,7 @@ void prompt() {
 	
 	// display prompt
 	cout << "1730sh:" << path << "$ ";
-	// this is a test comment
+	
 } //prompt
 
 int main() {
