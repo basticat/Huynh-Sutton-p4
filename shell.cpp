@@ -63,13 +63,12 @@ int main() {
 				if (argsstr[i] == ">") {
 					iodirection = 0;
 					fd = open((char*)argsstr[i+1].c_str(),O_CREAT|O_RDWR|O_TRUNC,0777);
-					std::cout << "oprn >" << '\n';
 				}else if (argsstr[i] == ">>") {
 					iodirection = 0;
 					fd = open((char*)argsstr[i+1].c_str(),O_CREAT|O_RDWR|O_APPEND,0777);
-					std::cout << "oprn >>" << '\n';
 				}else if (argsstr[i] == "<") {
-
+					iodirection = 1;
+					fd = open((char*)argsstr[i+1].c_str(),O_RDONLY);
 				}
 				break; //breaks out of loop if detects redirection
 			}
@@ -85,14 +84,20 @@ int main() {
 				backup = dup(STDOUT_FILENO);
 				int i = dup2(fd,1);
 			}
-
+			if (iodirection == 1) {
+				backup = dup(STDIN_FILENO);
+				int i = dup2(fd,0);
+			}
 			execvp(args[0], args); // execute command
 
 			//redirects back to stdout
 			if (iodirection == 0) {
 				dup2(backup,1);
-				std::cout << "redirect vack"	 << '\n';
 			}
+			if (iodirection == 1) {
+				int i = dup2(backup,0);
+			}
+			
 			break; // terminates child if command does not exist
 		} else {
 			// parent
