@@ -92,7 +92,6 @@ int main() {
 			if (strcmp(args[0], "export") == 0) {
 				string envv = argsstr[1] + "=" + argsstr[2];
 				int pe = setenv((char*)argsstr[1].c_str(),(char*)argsstr[2].c_str(),0);
-				std::cout << pe << '\n';
 				if (pe != 0) {
 					perror("export error");
 				}
