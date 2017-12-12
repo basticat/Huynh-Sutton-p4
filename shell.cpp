@@ -39,21 +39,28 @@ int main() {
 	while (strcmp(input, "exit") != 0) {
 		prompt();
 		getline(cin, inputstr);
-		iodirection = -1;
+		iodirection = -1; // by default, io is not redirected
+		
+		char* inputchar = new char[inputstr.length() + 1]; //used for temp holding input as char array
+		strcpy(inputchar, inputstr.c_str());
 		// exits from loop if exit is passed
-		if (strcmp(input, "exit") == 0) {
-			break;
+		if (strcmp(inputchar, "exit") == 0) {
+			exit(EXIT_SUCCESS);
 		}
 
-		string argsstr[12]; // breaks args up by spaces
-		stringstream ss(input);
+		string argsstr[12]; // breaks args up by spaces and =
+		char* token = strtok(inputchar, "= ");
 		int numArgs = 0; // counts number of arguments
 
 		// fills args array
-		while (ss >> argsstr[numArgs]) {
+		while (token != NULL) {
+			argsstr[numArgs] = token;
 			numArgs++;
- 		} //while
-
+			token = strtok(NULL, "= ");
+		} //while
+		
+		delete [] inputchar; // free memory
+		
 		char * args[12] = {nullptr};
 		// converts string args to char* args
 		for (int i = 0; i < numArgs; i++) {
@@ -76,10 +83,11 @@ int main() {
 			args[i] = (char*) argsstr[i].c_str();
 		}
 
-		//check if fisrt arg is export then does putend and then continues
+		//check if fisrt arg is export then does putenv and then continues
 		if (numArgs > 1) {
-			if (argsstr[0] == "export") {
-				int pe = putenv((char*)argsstr[1].c_str());
+			if (strcmp(args[0], "export") == 0) {
+				string envv = argsstr[1] + "=" + argsstr[2];
+				int pe = setenv((char*)argsstr[1].c_str(),(char*)argsstr[2].c_str(),0);
 				std::cout << pe << '\n';
 				if (pe != 0) {
 					perror("export error");
@@ -89,26 +97,38 @@ int main() {
 		}
 
 		int val = fork();
+		int i = 0;
 		if (val == 0) {
 			// child
 			//redirects stdout to fd
 			if (iodirection == 0) {
 				backup = dup(STDOUT_FILENO);
-				int i = dup2(fd,1);
+				i = dup2(fd,1);
 			}
 			if (iodirection == 1) {
 				backup = dup(STDIN_FILENO);
-				int i = dup2(fd,0);
+				i = dup2(fd,0);
 			}
 
+			// checks for errors during dup2
+			if (i < 0) {
+				cout << "Error: dup2()" << endl;
+				exit(0);
+			}
 			execvp(args[0], args); // execute command
 
 			//redirects back to stdout/stdin
 			if (iodirection == 0) {
-				dup2(backup,1);
+				i = dup2(backup,1);
 			}
 			if (iodirection == 1) {
-				int i = dup2(backup,0);
+				i = dup2(backup,0);
+			}
+			
+			// checks for errors during dup2
+			if (i < 0) {
+				cout << "Error: dup2()" << endl;
+				exit(0);
 			}
 
 			break; // terminates child if command does not exist
@@ -117,5 +137,7 @@ int main() {
 			wait(0); // wait for child to finish
 		} //if-else
 	} //while
+
+	return EXIT_SUCCESS;
 
 } //main
