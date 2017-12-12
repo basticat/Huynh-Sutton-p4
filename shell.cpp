@@ -72,11 +72,23 @@ int main() {
 				}
 				break; //breaks out of loop if detects redirection
 			}
+
 			args[i] = (char*) argsstr[i].c_str();
 		}
 
-		int val = fork();
+		//check if fisrt arg is export then does putend and then continues
+		if (numArgs > 1) {
+			if (argsstr[0] == "export") {
+				int pe = putenv((char*)argsstr[1].c_str());
+				std::cout << pe << '\n';
+				if (pe != 0) {
+					perror("export error");
+				}
+				continue;
+			}
+		}
 
+		int val = fork();
 		if (val == 0) {
 			// child
 			//redirects stdout to fd
@@ -88,16 +100,17 @@ int main() {
 				backup = dup(STDIN_FILENO);
 				int i = dup2(fd,0);
 			}
+
 			execvp(args[0], args); // execute command
 
-			//redirects back to stdout
+			//redirects back to stdout/stdin
 			if (iodirection == 0) {
 				dup2(backup,1);
 			}
 			if (iodirection == 1) {
 				int i = dup2(backup,0);
 			}
-			
+
 			break; // terminates child if command does not exist
 		} else {
 			// parent
