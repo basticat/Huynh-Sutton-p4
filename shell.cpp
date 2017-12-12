@@ -29,6 +29,10 @@ void prompt() {
 
 } //prompt
 
+/**
+* Main process.. Takes input from the user and executes
+* the commands as a shell would.
+*/
 int main() {
 	int iodirection = -1; //int representing I/O redirection
 	int fd;
